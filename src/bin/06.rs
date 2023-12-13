@@ -48,11 +48,7 @@ pub fn part_two(input: &str) -> Option<u64> {
     let time = join_nums(times);
     let distance = join_nums(distances);
 
-    Some(
-        (1..time)
-            .map(|ms| if (time - ms) * ms > distance { 1 } else { 0 })
-            .sum::<u64>(),
-    )
+    Some((1..time).filter(|ms| (time - ms) * ms > distance).count() as u64)
 }
 
 #[cfg(test)]
