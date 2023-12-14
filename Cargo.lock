@@ -8,6 +8,7 @@ version = "0.9.3"
 dependencies = [
  "glam",
  "itertools",
+ "lazy_static",
  "nom",
  "nom-supreme",
  "nom_locate",

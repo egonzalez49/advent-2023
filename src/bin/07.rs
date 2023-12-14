@@ -1,8 +1,17 @@
-use std::{cmp::Ordering, ops::Deref};
+use std::{cmp::Ordering, collections::HashMap, ops::Deref, sync::Mutex};
 
 use itertools::Itertools;
+use lazy_static::lazy_static;
 
 advent_of_code::solution!(7);
+
+lazy_static! {
+    static ref OPTIONS: Mutex<HashMap<String, bool>> = Mutex::new({
+        let mut m = HashMap::new();
+        m.insert(String::from("JOKERS_ENABLED"), false);
+        m
+    });
+}
 
 #[derive(Debug, PartialEq, Eq)]
 enum Hand<'a> {
@@ -36,16 +45,21 @@ impl<'a> Hand<'a> {
     }
 
     fn card_rankings(&self) -> Vec<u32> {
-        // For part two, we'll treat Jokers as 2.
+        // For part two, we'll treat Jokers as 1.
         self.value()
             .chars()
             .map(|card| match card {
                 'A' => 14,
                 'K' => 13,
                 'Q' => 12,
-                // 'J' => 11,
                 'T' => 10,
-                'J' => 1,
+                'J' => {
+                    if *OPTIONS.lock().unwrap().get("JOKERS_ENABLED").unwrap() {
+                        1
+                    } else {
+                        11
+                    }
+                }
                 value => value.to_digit(10).unwrap(),
             })
             .collect_vec()
@@ -78,8 +92,10 @@ fn determine_hand_type(hand: &str) -> Hand {
 
     let mut counts = hand.chars().counts();
 
+    let jokers_enabled = *OPTIONS.lock().unwrap().get("JOKERS_ENABLED").unwrap();
+
     // For part two, we combine Js into the highest card count.
-    if hand.contains('J') {
+    if hand.contains('J') && jokers_enabled {
         let joker_count = *counts.get(&'J').unwrap();
 
         if let Some((c, _)) = counts
@@ -134,6 +150,12 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
+    OPTIONS
+        .lock()
+        .unwrap()
+        .entry(String::from("JOKERS_ENABLED"))
+        .and_modify(|v| *v = true);
+
     let games = parse_games(input);
 
     Some(
@@ -152,9 +174,8 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        // Uncomment for testing part one - fails test run since logic isn't split from part two.
-        // let result = part_one(&advent_of_code::template::read_file("examples", DAY));
-        // assert_eq!(result, Some(6440));
+        let result = part_one(&advent_of_code::template::read_file("examples", DAY));
+        assert_eq!(result, Some(6440));
     }
 
     #[test]
